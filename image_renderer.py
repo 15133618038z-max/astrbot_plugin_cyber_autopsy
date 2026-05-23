@@ -144,3 +144,4 @@ class CyberImageRenderer:
                 current_y += 15
 
         canvas.convert("RGB").save(output_path, "JPEG", quality=95)
+
