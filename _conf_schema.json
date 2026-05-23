@@ -1,0 +1,20 @@
+{
+  "llm_provider_id": {
+    "description": "LLM 提供商 ID",
+    "type": "string",
+    "hint": "用于分析画像的大模型提供商ID（如 openai_4）。留空则使用默认模型。",
+    "default": ""
+  },
+  "max_analysis_messages": {
+    "description": "最大上下文分析量(条)",
+    "type": "int",
+    "hint": "插件在内存中最多缓存每个用户多少条消息用于生成案底。",
+    "default": 500
+  },
+  "protected_qq_list": {
+    "description": "受保护用户名单 (QQ号)",
+    "type": "list",
+    "hint": "填写QQ号。名单内的用户将被免除画像生成。",
+    "default": []
+  }
+}

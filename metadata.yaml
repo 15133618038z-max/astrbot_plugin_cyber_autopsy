@@ -1,0 +1,6 @@
+name: astrbot_plugin_cyber_autopsy
+display_name: 赛博案底体检
+desc: 收集上下文，通过“可不”生成 从神人值、MBTI、兽设等维度生成人格分析毒舌长图。
+version: v1.0.0
+author: kaf
+repo: https://github.com/15133618038z-max/astrbot_plugin_cyber_autopsy
