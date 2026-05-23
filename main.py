@@ -4,7 +4,7 @@ import asyncio
 from collections import defaultdict, deque
 from astrbot.api.event import filter
 from astrbot.api.star import Context, Star
-from astrbot.api import logger
+from astrbot.api import AstrBotConfig, logger
 from astrbot.core.platform.sources.aiocqhttp.aiocqhttp_message_event import (
     AiocqhttpMessageEvent,
 )
@@ -13,11 +13,11 @@ from .image_renderer import CyberImageRenderer
 
 
 class CyberAutopsyPlugin(Star):
-    def __init__(self, context: Context):
+    def __init__(self, context: Context, config: AstrBotConfig = None):
         super().__init__(context)
-        self.config = self.context.get_config()
+        self.config = config or {}
         self.llm_handler = CyberLLMHandler(self.context, self.config)
-        self.max_msgs = self.config.get("max_analysis_messages", 1000)
+        self.max_msgs = self.config.get("max_analysis_messages", 100)
         self.history = defaultdict(
             lambda: defaultdict(lambda: deque(maxlen=self.max_msgs))
         )
@@ -26,7 +26,7 @@ class CyberAutopsyPlugin(Star):
         self.output_dir = os.path.join(self.current_dir, "output")
         self.bg_path = os.path.join(self.assets_dir, "bg.jpg")
         self.font_path = os.path.join(self.assets_dir, "font.ttf")
-        # 并发控制：同时只处理 1 个，其他排队
+        # 排队机制：同时只处理 1 个画像任务
         self._queue = asyncio.Queue()
         self._processing = False
 
@@ -54,9 +54,8 @@ class CyberAutopsyPlugin(Star):
     async def _fetch_history_from_qq(
         self, event: AiocqhttpMessageEvent, group_id: str, user_id: str
     ) -> list:
-        """分页拉取群历史消息"""
         target_messages = []
-        max_rounds = 50
+        max_rounds = 25
         message_seq = 0
 
         try:
@@ -117,16 +116,14 @@ class CyberAutopsyPlugin(Star):
             yield event.plain_result("该用户受保护，无法生成画像。")
             return
 
-        # 排队：如果当前有任务在跑，提示排队
+        # 排队机制
         if self._processing:
             yield event.plain_result("当前有画像正在生成中，已加入排队，请稍候...")
-            # 等待前一个任务完成
             while self._processing:
                 await asyncio.sleep(1)
 
         self._processing = True
         try:
-            # 获取昵称
             for _ in range(3):
                 try:
                     info = await event.bot.get_group_member_info(
